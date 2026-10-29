@@ -9,7 +9,7 @@
 3. Inicializa el esquema con la conexión directa antes de desplegar. El arranque no crea ni migra tablas.
 4. Comprueba `/health`: debe devolver `paired-https`. `/api/v1/sync/pull` sin credenciales debe responder 401.
 
-El servicio `server` usa la raíz para incluir el contrato JSON y el paquete Python. `requirements.txt` instala PostgreSQL. El servicio `web` usa `apps/web`. `/api/*` y `/health` van a FastAPI; las demás rutas van a la web. Ambas comparten origen.
+El servicio `server` usa la raíz para incluir el contrato JSON y el paquete Python. `pyproject.toml` declara el paquete local por su nombre real e instala PostgreSQL. El servicio `web` usa `apps/web`. `/api/*` y `/health` van a FastAPI; las demás rutas van a la web. Ambas comparten origen.
 
 `app.py` requiere PostgreSQL y fuerza el modo de dispositivos vinculados aunque existan variables de desarrollo. El token local no habilita acceso público. La conexión usa TLS y los ajustes SQL duran solamente una transacción.
 
@@ -31,4 +31,4 @@ pnpm build
 
 `test_cloud.py` comprueba la entrada real, rechazo del token local, autenticación por dispositivo, HTTPS y ausencia de caché de API. Las pruebas de escritura en Neon deben usar ramas desechables.
 
-La unidad de despliegue comprende `app.py`, `requirements.txt`, `vercel.json`, `.vercelignore` y `test_cloud.py`. Puede revertirse sin borrar PostgreSQL ni modificar SQLite. Los respaldos PostgreSQL y la migración del teléfono son trabajo independiente.
+La unidad de despliegue comprende `app.py`, `pyproject.toml`, `vercel.json`, `.vercelignore` y `test_cloud.py`. Puede revertirse sin borrar PostgreSQL ni modificar SQLite. Los respaldos PostgreSQL y la migración del teléfono son trabajo independiente.

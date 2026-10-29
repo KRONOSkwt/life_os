@@ -1,0 +1,11 @@
+[project]
+name = "life-os-cloud"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["life-os-server[postgres]"]
+
+[tool.uv.sources]
+life-os-server = { path = "apps/server" }
+
+[tool.vercel]
+entrypoint = "app:app"
