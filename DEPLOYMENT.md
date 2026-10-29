@@ -13,6 +13,8 @@ El servicio `server` usa la raíz para incluir el contrato JSON y el paquete Pyt
 
 La dirección antigua `lifeos-pc4x.vercel.app` pertenece a una segunda importación del repositorio y redirige a `https://lifeos-sigma-sooty.vercel.app`, el proyecto principal configurado con Neon. La regla se limita al hostname antiguo; no cambia otros dominios ni requiere copiar credenciales a otro proyecto.
 
+El arranque web también comprueba ese hostname y cambia de dirección antes de montar la aplicación, conservando ruta, parámetros y sección. Esta comprobación cubre despliegues Services donde la redirección de plataforma no se aplica.
+
 `app.py` requiere PostgreSQL y fuerza el modo de dispositivos vinculados aunque existan variables de desarrollo. El token local no habilita acceso público. La conexión usa TLS y los ajustes SQL duran solamente una transacción.
 
 ## Entornos y acceso
