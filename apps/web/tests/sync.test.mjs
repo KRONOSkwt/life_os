@@ -38,9 +38,12 @@ test('shared routine example is valid and new operation owns a snapshot', () => 
   assert.throws(() => createRoutine({ ...draft, name: ' ' }))
 })
 
-test('fetch is invoked without binding it to the SyncClient instance', async () => {
-  const client = new SyncClient(token, function () {
+test('fetch keeps same-origin platform access and is invoked without a receiver', async () => {
+  const client = new SyncClient(token, function (url, init) {
     assert.equal(this, undefined)
+    assert.equal(url, '/api/v1/sync/pull')
+    assert.equal(init.credentials, 'same-origin')
+    assert.equal(init.headers.Authorization, `Bearer ${token}`)
     return Promise.resolve(response(page([])))
   })
   assert.deepEqual(await client.records(), [])

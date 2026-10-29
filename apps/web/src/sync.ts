@@ -29,7 +29,7 @@ export class SyncClient {
     let response: Response
     try {
       response = await this.#send(path, {
-        ...init, signal: AbortSignal.timeout(15000), cache: 'no-store', credentials: 'omit',
+        ...init, signal: AbortSignal.timeout(15000), cache: 'no-store', credentials: 'same-origin',
         headers: { ...init.headers, Authorization: `Bearer ${this.#token}` },
       })
     } catch {
