@@ -1,0 +1,23 @@
+{
+  "name": "life-os",
+  "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "engines": {
+    "node": ">=24.12.0",
+    "pnpm": ">=10.33.4 <11"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @life-os/web dev",
+    "typecheck": "pnpm --filter @life-os/web typecheck",
+    "build": "pnpm --filter @life-os/web build",
+    "test": "node --test apps/web/tests/*.test.mjs",
+    "test:browser": "pnpm --filter @life-os/web test:browser",
+    "check:artifacts": "node scripts/check-artifacts.mjs",
+    "db:neon:init": "node --env-file=.env.local scripts/neon.mjs init",
+    "dev:server:neon": "node --env-file=.env.local scripts/neon.mjs serve"
+  },
+  "dependencies": {
+    "@neon/config": "1.9.5",
+    "@neon/env": "1.6.6"
+  }
+}

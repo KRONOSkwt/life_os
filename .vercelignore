@@ -1,0 +1,17 @@
+.env*
+.neon
+.data
+.backups
+.cache
+.venv
+.git
+docs
+apps/android
+node_modules
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/dist
+**/build
+**/.gradle
+**/local.properties

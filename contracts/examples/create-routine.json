@@ -1,0 +1,24 @@
+{
+  "protocol_version": 1,
+  "operations": [
+    {
+      "operation_id": "be6daa7c-13b3-45c0-b70a-8ec039d9894a",
+      "entity_type": "routine",
+      "entity_id": "dfba3b34-0ba5-48cf-a71c-c34e09fb71c4",
+      "base_version": 0,
+      "action": "upsert",
+      "data": {
+        "name": "Push de ejemplo",
+        "exercises": [
+          {
+            "id": "9d62a531-9008-413e-9838-215dd74f1ba3",
+            "name": "Press de banca",
+            "target_sets": 3,
+            "reps_min": 8,
+            "reps_max": 12
+          }
+        ]
+      }
+    }
+  ]
+}
