@@ -12,14 +12,14 @@ export class SyncError extends Error {
 }
 
 export class SyncClient {
-  #token: string
+  #token: string | null
   #send: typeof fetch
   #records = new Map<string, SyncedRecord>()
   #cursor: string | null = null
   #loading: Promise<void> | null = null
 
-  constructor(token: string, send: typeof fetch = fetch) {
-    if (!token || !/^[\x21-\x7e]+$/.test(token)) throw new SyncError('credentials', 'Introduce un token válido para conectar.')
+  constructor(token: string | null, send: typeof fetch = fetch) {
+    if (token !== null && (!token || !/^[\x21-\x7e]+$/.test(token))) throw new SyncError('credentials', 'Introduce una clave de acceso válida.')
     this.#token = token
     // Native Window.fetch rejects a SyncClient receiver (Illegal invocation).
     this.#send = (input, init) => send(input, init)
@@ -30,12 +30,12 @@ export class SyncClient {
     try {
       response = await this.#send(path, {
         ...init, signal: AbortSignal.timeout(15000), cache: 'no-store', credentials: 'same-origin',
-        headers: { ...init.headers, Authorization: `Bearer ${this.#token}` },
+        headers: { ...init.headers, ...(this.#token === null ? {} : { Authorization: `Bearer ${this.#token}` }) },
       })
     } catch {
       throw new SyncError('connection', 'No se pudo contactar con el servidor. Comprueba que esté encendido e inténtalo de nuevo.')
     }
-    if (response.status === 401) throw new SyncError('credentials', 'El token no es válido. Revisa la conexión.')
+    if (response.status === 401) throw new SyncError('credentials', 'Tu acceso ha caducado o no es válido. Vuelve a acceder.')
     if (response.status === 409) throw new SyncError('reused', 'La operación guardada no coincide con la del servidor. Conserva la rutina pendiente para revisarla.')
     if (!response.ok) throw new SyncError('request', 'El servidor no pudo completar la solicitud. La rutina pendiente se conserva.')
     try { return await response.json() }

@@ -10,7 +10,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
 
@@ -80,6 +80,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     credentials = Credentials(store)
     app = FastAPI(title="Life OS API", version="0.1.0")
     bearer = HTTPBearer(auto_error=False)
+    session_cookie = "__Host-lifeos" if settings.mode == "paired" else "lifeos-development"
+
+    def browser_origin(request: Request):
+        if request.headers.get("origin") != str(request.base_url).rstrip("/"):
+            raise HTTPException(403, "Same-origin browser request required")
 
     @app.middleware("http")
     async def transport(request: Request, call_next):
@@ -91,7 +96,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return response
 
     def authenticated(request: Request, authorization: HTTPAuthorizationCredentials | None = Depends(bearer)) -> str:
-        supplied = authorization.credentials if authorization else ""
+        supplied = authorization.credentials if authorization else request.cookies.get(session_cookie, "")
+        if not authorization and supplied and request.method not in ("GET", "HEAD"):
+            browser_origin(request)
         device = None
         if settings.mode == "development":
             try:
@@ -105,6 +112,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if device is None:
             raise HTTPException(401, "Invalid credentials", headers={"WWW-Authenticate": "Bearer"})
         return device
+
+    @app.post("/api/v1/browser/session")
+    async def browser_login(request: Request):
+        browser_origin(request)
+        payload = await json_body(request, 1024)
+        if not isinstance(payload, dict) or set(payload) != {"token"} or not isinstance(payload["token"], str):
+            raise HTTPException(422, "Invalid access key")
+        supplied = payload["token"]
+        await run_in_threadpool(authenticated, request, HTTPAuthorizationCredentials(scheme="Bearer", credentials=supplied))
+        response = Response(status_code=204)
+        response.set_cookie(session_cookie, supplied, max_age=30 * 24 * 3600,
+                            httponly=True, secure=settings.mode == "paired", samesite="strict", path="/")
+        return response
+
+    @app.delete("/api/v1/browser/session")
+    def browser_logout(request: Request):
+        browser_origin(request)
+        response = Response(status_code=204)
+        response.delete_cookie(session_cookie, path="/", httponly=True,
+                               secure=settings.mode == "paired", samesite="strict")
+        return response
 
     @app.get("/health")
     def health():

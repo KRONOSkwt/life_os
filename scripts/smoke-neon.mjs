@@ -52,9 +52,9 @@ try {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(`${base}/#entrenamiento`)
-  await page.getByLabel('Token del servidor').fill(token)
-  await page.getByRole('button', { name: 'Conectar', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Desconectar', exact: true })).toBeVisible()
+  await page.getByLabel('Clave de acceso').fill(token)
+  await page.getByRole('button', { name: 'Acceder', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Cerrar sesión', exact: true })).toBeVisible()
   const name = `Prueba Neon ${randomUUID().slice(0, 8)}`
   await page.getByLabel('Nombre de la rutina').fill(name)
   await page.getByLabel('Ejercicio', { exact: true }).first().fill('Ejercicio de prueba')

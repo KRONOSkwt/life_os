@@ -7,9 +7,9 @@ const authorization = backend => ({ Authorization: `Bearer ${backend.token}` })
 const library = page => page.getByRole('region', { name: 'Mis rutinas', exact: true })
 
 async function connect(page, backend) {
-  await page.getByLabel('Token del servidor').fill(backend.token)
-  await page.getByRole('button', { name: 'Conectar', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Desconectar', exact: true })).toBeVisible()
+  await page.getByLabel('Clave de acceso').fill(backend.token)
+  await page.getByRole('button', { name: 'Acceder', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Cerrar sesión', exact: true })).toBeVisible()
 }
 
 async function fillRoutine(page, name) {
@@ -23,12 +23,12 @@ async function changes(request, backend) {
   return (await response.json()).changes
 }
 
-test('crear una rutina y consultarla después de recargar sin conservar el token', async ({ page, backend }, testInfo) => {
+test('recordar el acceso al recargar y cerrar sesión sin guardar la clave en JavaScript', async ({ page, backend }, testInfo) => {
   const name = `Push navegador ${randomUUID().slice(0, 8)}`
   await page.goto(`${backend.url}/#entrenamiento`)
-  await page.getByLabel('Token del servidor').fill('token-incorrecto')
-  await page.getByRole('button', { name: 'Conectar', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('El token no es válido')
+  await page.getByLabel('Clave de acceso').fill('token-incorrecto')
+  await page.getByRole('button', { name: 'Acceder', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('La clave de acceso no es válida')
   await connect(page, backend)
   await fillRoutine(page, name)
   await page.getByRole('button', { name: 'Añadir ejercicio' }).click()
@@ -41,10 +41,14 @@ test('crear una rutina y consultarla después de recargar sin conservar el token
   await expect(card.getByRole('listitem')).toHaveCount(2)
   await expect(card).toContainText('4 × 8–12')
   await page.reload()
-  await expect(page.getByLabel('Token del servidor')).toHaveValue('')
+  await expect(page.getByRole('button', { name: 'Cerrar sesión', exact: true })).toBeVisible()
   expect(await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }))).not.toContain(backend.token)
-  await connect(page, backend)
+  expect(await page.evaluate(() => document.cookie)).not.toContain(backend.token)
   await expect(card).toHaveCount(1)
+  await page.getByRole('button', { name: 'Cerrar sesión', exact: true }).click()
+  await page.reload()
+  await expect(page.getByLabel('Clave de acceso')).toHaveValue('')
+  await connect(page, backend)
   await page.evaluate(() => window.scrollTo(0, 0))
   await page.screenshot({ path: testInfo.outputPath('rutinas-desktop.png'), fullPage: true })
 })
@@ -67,10 +71,10 @@ test('recuperar tras recargar una creación confirmada cuya respuesta se perdió
   const operation = submitted.operations[0]
   expect((await changes(request, backend)).filter(item => item.entity_id === operation.entity_id)).toHaveLength(1)
   await page.reload()
-  await expect(page.getByLabel('Token del servidor')).toHaveValue('')
+  await expect(page.getByRole('button', { name: 'Cerrar sesión', exact: true })).toBeVisible()
   await expect(page.getByLabel('Nombre de la rutina')).toHaveValue(name)
   await expect(page.getByLabel('Nombre de la rutina')).toBeDisabled()
-  await connect(page, backend)
+  await expect(page.getByRole('button', { name: 'Cerrar sesión', exact: true })).toBeVisible()
   await page.unroute('**/api/v1/sync/push')
   const replay = page.waitForRequest(value => value.url().endsWith('/api/v1/sync/push'))
   await page.getByRole('button', { name: 'Reintentar guardado', exact: true }).click()
@@ -138,5 +142,5 @@ test('dashboard real y navegación entre módulos en escritorio y móvil', async
   await nav.getByRole('link', { name: 'Vista general', exact: true }).click()
   await page.setViewportSize({ width: 412, height: 915 })
   await page.screenshot({ path: testInfo.outputPath('dashboard-mobile.png'), fullPage: true })
-  await expect(page.getByRole('button', { name: 'Desconectar', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Cerrar sesión', exact: true })).toBeVisible()
 })

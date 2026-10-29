@@ -4,7 +4,8 @@ import LifeIcon from './LifeIcon.vue'
 import { createRoutine } from './domain.ts'
 import type { CreateRoutine, Exercise, SyncedRecord } from './domain.ts'
 import { clearPending, readPending, writePending } from './pending.ts'
-import { SyncClient } from './sync.ts'
+import { SyncClient, SyncError } from './sync.ts'
+import { signIn, signOut } from './access.ts'
 
 const token = ref('')
 const connected = ref(false)
@@ -46,30 +47,38 @@ onMounted(() => {
     storageProblem.value = true
     error.value = message(problem)
   }
+  void connect(true)
 })
 
-async function connect() {
+async function connect(restore = false) {
   if (busy.value) return
   busy.value = true
   error.value = ''
   notice.value = ''
   try {
-    const next = new SyncClient(token.value.trim())
+    if (!restore) await signIn(token.value.trim())
+    const next = new SyncClient(null)
     const latest = await next.records()
     client = next
     records.value = latest
     connected.value = true
     loaded.value = true
+    token.value = ''
   } catch (problem) {
     client = null
     connected.value = false
     records.value = []
     loaded.value = false
-    error.value = message(problem)
+    if (!(restore && problem instanceof SyncError && problem.code === 'credentials')) error.value = message(problem)
   } finally { busy.value = false }
 }
 
-function disconnect() {
+async function disconnect() {
+  if (busy.value) return
+  busy.value = true
+  try { await signOut() }
+  catch (problem) { error.value = message(problem); return }
+  finally { busy.value = false }
   client = null
   token.value = ''
   connected.value = false
@@ -180,7 +189,7 @@ function documentFocus() { document.getElementById('contenido')?.focus() }
       <div class="sidebar-bottom"><span class="personal-avatar">L</span><div><strong>Tu propio ritmo</strong><span>Un día a la vez.</span></div><LifeIcon name="leaf" /></div>
     </aside>
     <main id="contenido" tabindex="-1">
-      <header class="topbar"><span>Mi espacio <span class="separator">/</span> <strong>{{ pageLabel }}</strong></span><div class="topbar-right"><span class="topbar-date">{{ today }}</span><span class="status" :class="{ 'status-online': connected }"><span class="status-dot"></span>{{ connected ? 'Conectado al PC' : 'Sin conectar' }}</span></div></header>
+      <header class="topbar"><span>Mi espacio <span class="separator">/</span> <strong>{{ pageLabel }}</strong></span><div class="topbar-right"><span class="topbar-date">{{ today }}</span><span class="status" :class="{ 'status-online': connected }"><span class="status-dot"></span>{{ connected ? 'Sesión iniciada' : busy ? 'Comprobando acceso…' : 'Acceso pendiente' }}</span></div></header>
       <section class="intro" aria-labelledby="page-title">
         <div><p class="eyebrow">{{ page === 'inicio' ? 'MENOS RUIDO. MÁS ESPACIO PARA TI.' : 'A TU RITMO' }}</p><h1 id="page-title">{{ page === 'inicio' ? 'Todo en su sitio.' : pageLabel }}<span class="title-dot" v-if="page !== 'inicio'">.</span></h1><p class="intro-copy">{{ page === 'inicio' ? 'Una mirada a tu día. El resto, paso a paso.' : page === 'entrenamiento' ? 'Construye tu rutina. Encuentra tu constancia.' : page === 'historial' ? 'Cada sesión cuenta. Aquí está tu recorrido.' : currentModule?.description }}</p></div>
         <span class="intro-tag"><LifeIcon name="leaf" /> Tu vida, con intención</span>
@@ -255,18 +264,18 @@ function documentFocus() { document.getElementById('contenido')?.focus() }
       </template>
       <section v-if="currentModule" class="card module-page" :aria-label="currentModule.label"><span class="module-emblem"><LifeIcon :name="currentModule.icon" /></span><span class="quiet-badge">En preparación</span><h2>Un espacio que crecerá contigo.</h2><p>{{ currentModule.detail }} Este módulo todavía no permite registrar información.</p><a href="#inicio" class="button-link button-secondary">Volver a mi espacio <LifeIcon name="arrow" /></a></section>
       <section class="connection card" aria-labelledby="connection-title">
-        <div><h2 id="connection-title">Tu espacio, conectado</h2><p>Conecta con tu PC para consultar y guardar tus entrenamientos.</p></div>
-        <form v-if="!connected" class="connection-form" @submit.prevent="connect">
-          <label for="server-token">Token del servidor</label>
+        <div><h2 id="connection-title">{{ connected ? 'Tu espacio está listo' : 'Accede a tu espacio' }}</h2><p>{{ connected ? 'Tu acceso se recordará en este navegador durante 30 días.' : 'Introduce tu clave privada una vez para ver y guardar tus entrenamientos.' }}</p></div>
+        <form v-if="!connected" class="connection-form" @submit.prevent="connect(false)">
+          <label for="server-token">Clave de acceso</label>
           <div class="input-action">
-            <input id="server-token" v-model="token" type="password" autocomplete="off" spellcheck="false" required :disabled="busy" placeholder="Introduce tu token" />
-            <button type="submit" :disabled="busy">{{ busy ? 'Conectando…' : 'Conectar' }}</button>
+            <input id="server-token" v-model="token" type="password" autocomplete="off" spellcheck="false" required :disabled="busy" placeholder="Pega tu clave privada" />
+            <button type="submit" :disabled="busy">{{ busy ? 'Accediendo…' : 'Acceder' }}</button>
           </div>
-          <small>Se utiliza solo durante esta sesión del navegador.</small>
+          <small>Usa tu archivo de clave de acceso. En un equipo compartido, cierra la sesión al terminar.</small>
         </form>
         <div v-else class="connection-actions">
           <button class="button-secondary" :disabled="busy" @click="refresh">{{ busy ? 'Actualizando…' : 'Actualizar' }}</button>
-          <button class="button-text" :disabled="busy" @click="disconnect">Desconectar</button>
+          <button class="button-text" :disabled="busy" @click="disconnect">Cerrar sesión</button>
         </div>
       </section>
 

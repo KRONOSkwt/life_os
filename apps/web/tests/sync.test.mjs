@@ -49,6 +49,16 @@ test('fetch keeps same-origin platform access and is invoked without a receiver'
   assert.deepEqual(await client.records(), [])
 })
 
+test('browser session requests use cookies without emitting a bearer token', async () => {
+  const client = new SyncClient(null, async (url, init) => {
+    assert.equal(url, '/api/v1/sync/pull')
+    assert.equal(init.credentials, 'same-origin')
+    assert.equal(init.headers.Authorization, undefined)
+    return response(page([]))
+  })
+  assert.deepEqual(await client.records(), [])
+})
+
 test('lost response preserves exact operation across reload and retry', async () => {
   const local = storage()
   const operation = createRoutine(template.data)

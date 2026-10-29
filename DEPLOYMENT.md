@@ -17,7 +17,9 @@ El servicio `server` usa la raíz para incluir el contrato JSON y el paquete Pyt
 
 Los previews deben usar una rama Neon independiente. No copies automáticamente las credenciales de producción a preview. El despliegue no configura servicios de pago ni crea otra base.
 
-Las credenciales web se emiten mediante la administración privada de `Credentials`, se conservan localmente y se pegan en el campo de conexión de la web. Solo su hash se guarda en PostgreSQL. La administración no tiene una ruta pública.
+Las credenciales web se emiten mediante la administración privada de `Credentials` y se introducen una vez en «Clave de acceso». Solo su hash se guarda en PostgreSQL. La administración no tiene una ruta pública.
+
+La web intercambia la clave por una cookie de acceso con HttpOnly, Secure y SameSite=Strict, válida en el navegador durante 30 días. JavaScript no guarda ni vuelve a leer la clave; la sesión se recupera al recargar. «Cerrar sesión» borra la cookie de este navegador. Revocar la credencial en el servidor invalida también el acceso por cookie. El inicio, el cierre y las escrituras con cookie comprueban el origen para impedir solicitudes de otros sitios. Los clientes nativos conservan su autenticación Bearer.
 
 No se migra SQLite ni cambia el servidor del teléfono. Android necesita una invitación compatible con el certificado público antes de enlazarse al servidor nuevo.
 
@@ -30,5 +32,7 @@ pnpm build
 ```
 
 `test_cloud.py` comprueba la entrada real, rechazo del token local, autenticación por dispositivo, HTTPS y ausencia de caché de API. Las pruebas de escritura en Neon deben usar ramas desechables.
+
+La unidad de acceso recordado comprende `api.py`, `test_browser_session.py`, `access.ts`, `App.vue`, `sync.ts`, sus pruebas web y el recorrido Neon actualizado. Verificación local: 75 pruebas Python aprobadas y 9 PostgreSQL omitidas, 17 pruebas web aprobadas, compilación aprobada y 4 recorridos Edge aprobados, incluido recargar sin repetir la clave y cerrar sesión. Revertir esta unidad devuelve el acceso manual sin modificar tablas, datos ni la autenticación Android.
 
 La unidad de despliegue comprende `app.py`, `pyproject.toml`, `vercel.json`, `.vercelignore` y `test_cloud.py`. Puede revertirse sin borrar PostgreSQL ni modificar SQLite. Los respaldos PostgreSQL y la migración del teléfono son trabajo independiente.
