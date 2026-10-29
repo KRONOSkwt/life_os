@@ -1,5 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "lifeos-pc4x.vercel.app" }],
+      "destination": "https://lifeos-sigma-sooty.vercel.app/:path*",
+      "permanent": false
+    }
+  ],
   "services": {
     "web": {
       "root": "apps/web",

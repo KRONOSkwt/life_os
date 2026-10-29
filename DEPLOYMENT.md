@@ -11,6 +11,8 @@
 
 El servicio `server` usa la raíz para incluir el contrato JSON y el paquete Python. `pyproject.toml` declara el paquete local por su nombre real e instala PostgreSQL. El servicio `web` usa `apps/web`. `/api/*` y `/health` van a FastAPI; las demás rutas van a la web. Ambas comparten origen.
 
+La dirección antigua `lifeos-pc4x.vercel.app` pertenece a una segunda importación del repositorio y redirige a `https://lifeos-sigma-sooty.vercel.app`, el proyecto principal configurado con Neon. La regla se limita al hostname antiguo; no cambia otros dominios ni requiere copiar credenciales a otro proyecto.
+
 `app.py` requiere PostgreSQL y fuerza el modo de dispositivos vinculados aunque existan variables de desarrollo. El token local no habilita acceso público. La conexión usa TLS y los ajustes SQL duran solamente una transacción.
 
 ## Entornos y acceso
