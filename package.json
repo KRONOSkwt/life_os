@@ -14,6 +14,8 @@
     "test:browser": "pnpm --filter @life-os/web test:browser",
     "check:artifacts": "node scripts/check-artifacts.mjs",
     "db:neon:init": "node --env-file=.env.local scripts/neon.mjs init",
+    "db:neon:import": "node --env-file=.env.local scripts/neon.mjs import",
+    "pair:neon": "node --env-file=.env.local scripts/neon.mjs pair",
     "dev:server:neon": "node --env-file=.env.local scripts/neon.mjs serve"
   },
   "dependencies": {

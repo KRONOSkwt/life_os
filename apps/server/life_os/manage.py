@@ -18,6 +18,7 @@ from .backup import create_backup, restore_backup
 from .store import Store
 from .postgres import PostgresStore, open_store
 from .tls import covers_host, create_identity, identity_info, load_identity
+from .migrate import migrate_sqlite
 
 
 def parser() -> argparse.ArgumentParser:
@@ -47,6 +48,12 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--destination", type=Path, required=True,
                          help="Carpeta nueva; nunca se sobrescribe una existente")
     commands.add_parser("postgres-init", help="Inicializar una base PostgreSQL vacía configurada por entorno")
+    migration = commands.add_parser("postgres-import", help="Importar SQLite conservando historial e identidad")
+    migration.add_argument("--source", type=Path, required=True)
+    migration.add_argument("--dry-run", action="store_true")
+    cloud_pair = commands.add_parser("pair-cloud", help="Invitación HTTPS con certificados públicos")
+    cloud_pair.add_argument("--url", required=True)
+    cloud_pair.add_argument("--output", type=Path, required=True)
     return result
 
 
@@ -66,7 +73,29 @@ def _password(*, confirm: bool) -> str:
 
 def main(argv=None) -> None:
     arguments = parser().parse_args(argv)
-    if arguments.command == "postgres-init":
+    if arguments.command == "postgres-import":
+        url = os.environ.get("LIFE_OS_DATABASE_URL")
+        if not url:
+            raise ValueError("Configura LIFE_OS_DATABASE_URL en el entorno privado.")
+        output = migrate_sqlite(arguments.source, url, dry_run=arguments.dry_run)
+    elif arguments.command == "pair-cloud":
+        url = urlsplit(arguments.url)
+        if (url.scheme != "https" or not url.hostname or url.username or url.password
+                or url.query or url.fragment or url.path not in ("", "/")):
+            raise ValueError("Use an HTTPS origin without credentials, path, query or fragment")
+        target = arguments.output.resolve()
+        if target.exists():
+            raise ValueError("El archivo de invitación ya existe; no se sobrescribió.")
+        database_url = os.environ.get("LIFE_OS_DATABASE_URL")
+        if not database_url:
+            raise ValueError("Configura LIFE_OS_DATABASE_URL para invitar al servidor cloud.")
+        access = Credentials(PostgresStore(database_url))
+        invitation = {"protocol_version": 1, "server_url": arguments.url.rstrip('/'),
+                      "server_id": access.store.database_id, "tls_mode": "system", **access.issue_pairing()}
+        with target.open('x', encoding='utf-8') as file:
+            json.dump(invitation, file)
+        output = {"invitation_file": str(target), "expires_at": invitation['expires_at']}
+    elif arguments.command == "postgres-init":
         url = os.environ.get("LIFE_OS_DATABASE_URL")
         if not url:
             raise ValueError("Configura LIFE_OS_DATABASE_URL en el entorno privado.")

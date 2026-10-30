@@ -231,7 +231,7 @@ fun LifeScreen(model: LifeViewModel = viewModel()) {
                             if (!model.linked || pairing) {
                                 Text("Vincular con el PC", style = MaterialTheme.typography.titleMedium)
                                 Text("Pega la invitación completa generada en tu PC.", style = MaterialTheme.typography.bodyMedium)
-                                OutlinedTextField(invitation, { invitation = it }, label = { Text("Invitación del PC") },
+                                OutlinedTextField(invitation, { invitation = it }, label = { Text("Invitación de vinculación") },
                                     visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), maxLines = 5)
                                 Button(onClick = { model.pair(invitation); invitation = "" }, enabled = !model.busy && invitation.isNotBlank()) { Text("Vincular") }
                                 if (model.linked) TextButton(onClick = { pairing = false; invitation = "" }) { Text("Cerrar vinculación") }

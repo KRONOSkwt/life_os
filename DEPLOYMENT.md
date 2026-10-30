@@ -25,7 +25,7 @@ Las credenciales web se emiten mediante la administración privada de `Credentia
 
 La web intercambia la clave por una cookie de acceso con HttpOnly, Secure y SameSite=Strict, válida en el navegador durante 30 días. JavaScript no guarda ni vuelve a leer la clave; la sesión se recupera al recargar. «Cerrar sesión» borra la cookie de este navegador. Revocar la credencial en el servidor invalida también el acceso por cookie. El inicio, el cierre y las escrituras con cookie comprueban el origen para impedir solicitudes de otros sitios. Los clientes nativos conservan su autenticación Bearer.
 
-No se migra SQLite ni cambia el servidor del teléfono. Android necesita una invitación compatible con el certificado público antes de enlazarse al servidor nuevo.
+La [guía de migración](CLOUD_MIGRATION.md) permite importar SQLite conservando identidad y vincular Android mediante HTTPS público. Los previews conservan la protección de Vercel; la producción permite clientes nativos y exige credenciales de Life OS para acceder a los datos.
 
 ## Verificación y reversión
 

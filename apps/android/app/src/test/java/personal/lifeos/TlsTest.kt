@@ -12,6 +12,20 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLException
 
 class TlsTest {
+    @Test fun publicTrustDoesNotAcceptSelfSignedCertificate() = withServer("localhost") { server, _ ->
+        try {
+            serverClient("system", "").newCall(Request.Builder().url(server.url("/")).build()).execute().close()
+            fail("Public trust accepted a self-signed certificate")
+        } catch (_: SSLException) { }
+    }
+    @Test fun publicTrustRejectsLocalPinsAndUnknownModes() {
+        for ((mode, fingerprint) in listOf("system" to "0".repeat(64), "unknown" to "")) {
+            try { serverClient(mode, fingerprint); fail("Invalid HTTPS mode accepted") }
+            catch (_: IllegalArgumentException) { }
+        }
+        assertFalse(serverClient("system", "").followRedirects)
+        assertFalse(serverClient("system", "").followSslRedirects)
+    }
     private fun fingerprint(cert: HeldCertificate) = MessageDigest.getInstance("SHA-256")
         .digest(cert.certificate.encoded).joinToString("") { "%02x".format(it) }
     private fun withServer(host: String, test: (MockWebServer, HeldCertificate) -> Unit) {

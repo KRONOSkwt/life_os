@@ -43,8 +43,8 @@ class SyncWorker(context: Context, parameters: WorkerParameters) : CoroutineWork
 
 fun syncError(error: Exception): String = when (error) {
     is AccessRejected -> error.message!!
-    is javax.net.ssl.SSLException -> "No se pudo verificar el certificado o la dirección. Revisa la invitación del PC."
-    is java.io.IOException -> "Sin conexión con el PC. Tus sesiones y cambios pendientes están guardados."
+    is javax.net.ssl.SSLException -> "No se pudo verificar el certificado o la dirección. Revisa la invitación de vinculación."
+    is java.io.IOException -> "Sin conexión con Life OS. Tus sesiones y cambios pendientes están guardados."
     is IllegalArgumentException -> error.message ?: "Datos inválidos"
     else -> "No se pudo completar la operación. Los datos locales se conservan."
 }
